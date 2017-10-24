@@ -2,40 +2,103 @@ import sqlite3, argparse
 import pandas as pd
 import numpy
 from Class import Protein, Modification
+import urllib,urllib2
+
+
 
 help_msg = "Adds data from Proteome Discoverer output to given DB"
 parser = argparse.ArgumentParser(description=help_msg)
-parser.add_argument('databasefile', help='sqlite3 file (or blank)')
-parser.add_argument('pdfile', help='Proteome Discoverer Output')
+parser.add_argument('--databasefile', help='sqlite3 file (or blank)')
+parser.add_argument('--pdfile', help='Proteome Discoverer Output')
+parser.add_argument('--email', default='spoc@unimelb.edu.au')
 
 
         
-def add_proteins_to_db(proteins, db_cursor, get_inserted_ids=False):
-    existing_proteins = db_cursor.execute("SELECT uniprotid FROM proteintb")
-    inserted_ids = []
+def add_proteins_to_db(proteins, db_cursor):
+    # Not sure monitoring for existing proteins is neccessary
+    # Will probably end up with a single db for each PD file
+    existing_proteins_cursor = db_cursor.execute("SELECT uniprotid FROM proteintb")
+    existing_proteins = existing_proteins_cursor.fetchall()
+    print "existing", existing_proteins
+    existing_proteins_list = [i[0] for i in existing_proteins]
+    print "as list:", existing_proteins_list
+
     for protein in proteins:
         up_id = protein.get_uprotid()
-        if up_id not in existing_proteins:
+        if up_id not in existing_proteins_list:
             db_cursor.execute("INSERT INTO proteintb (uniprotid) VALUES(?);"\
                               ,(up_id,))
-            inserted_ids.append(db_cursor.lastrowid)
 
-    if get_inserted_ids:
-        return inserted_ids
+def put_genenames_in_db(db_cursor, email):
+    db_cursor.execute("SELECT uniprotid, genename FROM proteintb;")
+    results = db_cursor.fetchall()
+
+    uniprotids = []
+    
+    for uniprotid, genename in results:
+        if genename == None:
+            uniprotids.append(uniprotid)
+
+    uprot_to_genename_dict = get_genenames_from_uniprotids(uniprotids, email)
+    
+    for uprot, genename in uprot_to_genename_dict.iteritems():
+        db_cursor.execute('UPDATE proteintb SET genename=? where uniprotid=?',
+                          [genename,uprot])
+
+
+        
+
+def get_genenames_from_uniprotids(uniprotids, email):
+    url = 'http://www.uniprot.org/uploadlists/'
+
+    str_all_uprots = ""
+    for uprot in uniprotids:
+        str_all_uprots = str_all_uprots +  uprot + " "
+    
+    params = {
+    'from':'ACC',
+    'to':'GENENAME',
+    'format':'tab',
+    'query':str_all_uprots
+    }
+
+    data = urllib.urlencode(params)
+    request = urllib2.Request(url, data)
+    contact = email 
+    request.add_header('User-Agent', 'Python %s' % contact)
+    response = urllib2.urlopen(request)
+    page = response.read(200000)
+
+    lines = page.split('\n')
+    print lines
+
+    uprot_to_genename_dict = {}
+
+    for line in lines[1:]:
+        if line != "":
+            #print "line", line
+            parts = line.split('\t')
+            #print "parts", parts
+            #print parts
+            uprot_to_genename_dict[parts[0]] = parts[1].strip('\n')
+
+    return uprot_to_genename_dict
+
+
+
 
 def add_modifications_to_db(modifications,db_cursor, get_inserted_ids=False):
-    inserted_ids = []
+
     for modification in modifications:
         residue = modification.get_residue()
         position = modification.get_position()
         proteinid = modification.get_protein()
         db_cursor.execute("INSERT INTO modificationtb (residue,position,proteinid) VALUES(?,?,?);"\
                               ,(residue,position,proteinid))
-        inserted_ids.append(db_cursor.lastrowid)
 
-    if get_inserted_ids:
-        return inserted_ids
-    
+
+
+        
 
 def get_proteins_modifications_from_pd(pdfile):
     xl = pd.ExcelFile(pdfile)
@@ -122,5 +185,11 @@ if __name__ == "__main__":
 
     add_proteins_to_db(proteins, db_cursor)
     add_modifications_to_db(modifications, db_cursor)
+    put_genenames_in_db(db_cursor, args.email)
+    #db_cursor.execute('SELECT proteinid, uniprotid FROM proteintb;')
+    #print db_cursor.fetchall()
+
+    conn.commit() # might be better to do this in the functions?? would have to pass conn instead of cursor
+    conn.close()
 
     
