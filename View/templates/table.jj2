@@ -1,0 +1,35 @@
+<link rel="stylesheet" type="text/css" href="static/css/style.css">
+<script type="text/javascript" src="static/scripts/jquery-latest.js"></script>
+<script type="text/javascript" src="static/scripts/jquery.tablesorter.js"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+    // call the tablesorter plugin
+    $("table").tablesorter({
+        // sort on the first column and third column, order asc
+        sortList: [[0,0],[2,0]]
+    });
+});
+
+</script>
+
+<table class="tablesorter" cellspacing="1">
+   <thead>>
+        <tr>
+            <th>UNIPROT ID</th>
+            <th>GENENAME</th>
+            <th>FUNCTION</th>
+        </tr>
+   </thead>
+   <tbody>
+   {% for item in items %}
+   <TR>
+     <TD>{{item.uniprotid}}</TD>
+     <TD>{{item.genename}}</TD>
+     <TD>{{item.function}}</TD>
+   </TR>
+   {% endfor %}
+    </tbody>
+</table>
+
