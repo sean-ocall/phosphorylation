@@ -31,7 +31,7 @@ def get_proteins_from_db(db_cursor):
 
 def render():
     # Takes the place of __main__ for now in mod_python
-    conn = sqlite.connect("../Model/phospho-db.sqlite")
+    conn = sqlite3.connect("../Model/phospho-db.sqlite")
     db_cursor = conn.cursor()
 
     proteins_listofdicts = get_proteins_from_db(db_cursor)
@@ -41,7 +41,7 @@ def render():
 
 if __name__=="__main__":
     args = parser.parse_args()
-    conn = sqlite.connect(args.databasefile)
+    conn = sqlite3.connect(args.databasefile)
     db_cursor = conn.cursor()
 
     proteins_listofdicts = get_proteins_from_db(db_cursor)
