@@ -9,7 +9,7 @@ def render_table(proteins_dict):
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
     j2_env = Environment(loader=FileSystemLoader(THIS_DIR),
                          trim_blocks=True)
-    print j2_env.get_template('templates/test_template.html').render\
+    print j2_env.get_template('templates/table.jj2').render\
         (proteins=proteins_dict)
 
 def get_proteins_from_db(db_cursor):
@@ -31,7 +31,7 @@ def get_proteins_from_db(db_cursor):
 
 def render():
     # Takes the place of __main__ for now in mod_python
-    conn = sqlite3.connect("../Model/phospho-db.sqlite")
+    conn = sqlite3.connect("/home/phospho/phosphorylation/Model/phospho-db.sqlite")
     db_cursor = conn.cursor()
 
     proteins_listofdicts = get_proteins_from_db(db_cursor)
