@@ -19,9 +19,9 @@ def add_proteins_to_db(proteins, db_cursor):
     # Will probably end up with a single db for each PD file
     existing_proteins_cursor = db_cursor.execute("SELECT uniprotid FROM proteintb")
     existing_proteins = existing_proteins_cursor.fetchall()
-    print "existing", existing_proteins
+    #print "existing", existing_proteins
     existing_proteins_list = [i[0] for i in existing_proteins]
-    print "as list:", existing_proteins_list
+    #print "as list:", existing_proteins_list
 
     for protein in proteins:
         up_id = protein.get_uprotid()
@@ -32,6 +32,7 @@ def add_proteins_to_db(proteins, db_cursor):
 def put_genenames_in_db(db_cursor, email):
     db_cursor.execute("SELECT uniprotid, genename FROM proteintb;")
     results = db_cursor.fetchall()
+    print results
 
     uniprotids = []
     
