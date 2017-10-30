@@ -7,11 +7,16 @@ parser.add_argument('--databasefile', help='sqlite3 file (or blank)')
 
 def render_table(proteins_dict):
     THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    j2_env = Environment(loader=FileSystemLoader(THIS_DIR),
-                         trim_blocks=True)
-    print j2_env.get_template('templates/table.jj2').render\
-        (proteins=proteins_dict)
+    template_loader = jinja2.FileSystemLoader(THIS_DIR)
+    template_env = jinja2.Environment(loader=template_loader)
+    template_file = 'templates/table.jj2'
 
+    template = template_env.get_template(template_file)
+    html_out = template.render(proteins = proteins_dict)
+
+    op = open('templates/table.html','w')
+    op.write(html_out)
+    
 def get_proteins_from_db(db_cursor):
     proteins_cursor = db_cursor.execute("SELECT * FROM proteintb;")
     proteins = proteins_cursor.fetchall()
