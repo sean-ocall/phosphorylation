@@ -22,12 +22,13 @@ def get_proteins_from_db(db_cursor):
     proteins = proteins_cursor.fetchall()
 
     proteins_listofdicts = []
+    print proteins[10][2]
     
     for protein in proteins:
         p_dict = {}
         p_dict['proteinid'] = protein[0]
         p_dict['uniprotid'] = protein[1]
-        p_dict['genenameid'] = protein[2]
+        p_dict['genename'] = protein[2]
         p_dict['function'] = protein[3]
 
         proteins_listofdicts.append(p_dict)

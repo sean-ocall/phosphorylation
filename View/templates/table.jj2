@@ -1,6 +1,6 @@
-<link rel="stylesheet" type="text/css" href="static/css/style.css">
-<script type="text/javascript" src="static/scripts/jquery-latest.js"></script>
-<script type="text/javascript" src="static/scripts/jquery.tablesorter.js"></script>
+<link rel="stylesheet" type="text/css" href="../static/css/style.css">
+<script type="text/javascript" src="../static/scripts/jquery-latest.js"></script>
+<script type="text/javascript" src="../static/scripts/jquery.tablesorter.js"></script>
 
 <script type="text/javascript">
 
@@ -15,7 +15,7 @@ $(document).ready(function() {
 </script>
 
 <table class="tablesorter" cellspacing="1">
-   <thead>>
+   <thead>
         <tr>
             <th>UNIPROT ID</th>
             <th>GENENAME</th>
