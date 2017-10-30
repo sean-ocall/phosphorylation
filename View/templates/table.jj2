@@ -23,11 +23,11 @@ $(document).ready(function() {
         </tr>
    </thead>
    <tbody>
-   {% for item in items %}
+   {% for protein in proteins %}
    <TR>
-     <TD>{{item.uniprotid}}</TD>
-     <TD>{{item.genename}}</TD>
-     <TD>{{item.function}}</TD>
+     <TD>{{protein.uniprotid}}</TD>
+     <TD>{{protein.genename}}</TD>
+     <TD>{{protein.function}}</TD>
    </TR>
    {% endfor %}
     </tbody>
