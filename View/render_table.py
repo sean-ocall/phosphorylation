@@ -1,5 +1,5 @@
 import argparse, sqlite3, os
-from jinja2 import Environment, FileSystemLoader
+import jinja2
 
 help_msg = "Grabs data from DB and renders to html"
 parser = argparse.ArgumentParser(description=help_msg)
