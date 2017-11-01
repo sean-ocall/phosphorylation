@@ -3,7 +3,7 @@ import pandas as pd
 import numpy
 from Class import Protein, Modification
 import urllib,urllib2
-
+import xml.etree.ElementTree as ET
 
 
 help_msg = "Adds data from Proteome Discoverer output to given DB"
@@ -49,9 +49,32 @@ def put_genenames_in_db(db_cursor, email):
         db_cursor.execute('UPDATE proteintb SET genename=? where uniprotid=?',
                           [genename,uprot])
 
+def put_function_in_db(db_cursor):
+    db_cursor.execute("SELECT proteinid, uniprotid, function FROM proteintb;")
+    results = db_cursor.fetchall()
 
-        
+    for proteinid, uniprotid, function in results[1:3]:
+        if function is None:
+            url = "http://www.uniprot.org/uniprot/" + uniprotid + ".xml"
+            url_content = urllib.urlopen(url)
+            xml_content = url_content.read()
+            #print xml_content[0:200]
 
+            root = ET.fromstring(xml_content)
+            #root = tree.getroot()
+
+            function = root.findall('.//{http://uniprot.org/uniprot}comment')
+            for f in function:
+                if f.attrib['type'] == 'function':
+                    function_text = "<a href='"+ url.strip('.xml')  + "'>" +  "{}".format(f.find('.//{http://uniprot.org/uniprot}text').text) + "</a>"
+                    print function_text
+                    print f.attrib
+                    db_cursor.execute('UPDATE proteintb SET function=? where proteinid=?', (function_text, proteinid))
+                    
+                
+ 
+
+            
 def get_genenames_from_uniprotids(uniprotids, email):
     url = 'http://www.uniprot.org/uploadlists/'
 
@@ -187,9 +210,10 @@ if __name__ == "__main__":
 
     proteins, modifications = get_proteins_modifications_from_pd(args.pdfile)
 
-    add_proteins_to_db(proteins, db_cursor)
-    add_modifications_to_db(modifications, db_cursor)
-    put_genenames_in_db(db_cursor, args.email)
+    #add_proteins_to_db(proteins, db_cursor)
+    #add_modifications_to_db(modifications, db_cursor)
+    #put_genenames_in_db(db_cursor, args.email)
+    put_function_in_db(db_cursor)
     #db_cursor.execute('SELECT proteinid, uniprotid FROM proteintb;')
     #print db_cursor.fetchall()
 
