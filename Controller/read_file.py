@@ -38,7 +38,10 @@ def put_genenames_in_db(db_cursor, email):
     
     for uniprotid, genename in results:
         if genename == None:
+            if uniprotid[-2] == '-':
+                uniprotid = uniprotid[:-2]
             uniprotids.append(uniprotid)
+           
 
     uprot_to_genename_dict = get_genenames_from_uniprotids(uniprotids, email)
     

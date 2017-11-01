@@ -1,5 +1,5 @@
 import sqlite3
-conn = sqlite3.connect('phospho-db.sqlite')
+conn = sqlite3.connect('../Model/phospho-db.sqlite')
 c = conn.cursor()
 
 table_name1 = 'proteintb'  # name of the table to be created
