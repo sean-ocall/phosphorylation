@@ -53,7 +53,7 @@ def put_function_in_db(db_cursor):
     db_cursor.execute("SELECT proteinid, uniprotid, function FROM proteintb;")
     results = db_cursor.fetchall()
 
-    for proteinid, uniprotid, function in results[1:3]:
+    for proteinid, uniprotid, function in results:
         if function is None:
             url = "http://www.uniprot.org/uniprot/" + uniprotid + ".xml"
             url_content = urllib.urlopen(url)
@@ -67,9 +67,10 @@ def put_function_in_db(db_cursor):
             for f in function:
                 if f.attrib['type'] == 'function':
                     function_text = "<a href='"+ url.strip('.xml')  + "'>" +  "{}".format(f.find('.//{http://uniprot.org/uniprot}text').text) + "</a>"
-                    print function_text
-                    print f.attrib
+                    #print function_text
+                    #print f.attrib
                     db_cursor.execute('UPDATE proteintb SET function=? where proteinid=?', (function_text, proteinid))
+                    print "put", function_text, ' in proteinid:', proteinid 
                     
                 
  
