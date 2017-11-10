@@ -30,24 +30,33 @@ def add_proteins_to_db(proteins, db_cursor):
                               ,(up_id,))
 
 def put_genenames_in_db(db_cursor, email):
-    db_cursor.execute("SELECT uniprotid, genename FROM proteintb;")
+    db_cursor.execute("SELECT proteinid, uniprotid, genename FROM proteintb;")
     results = db_cursor.fetchall()
     print results
 
     uniprotids = []
+    uprotid_protid_dict = {} # A little wasteful but solves a problem cleanly
     
-    for uniprotid, genename in results:
+    for proteinid, uniprotid, genename in results:
         if genename == None:
             if uniprotid[-2] == '-':
+                #print "shortened %s to %s"%(uniprotid,uniprotid[:-2])
                 uniprotid = uniprotid[:-2]
             uniprotids.append(uniprotid)
+            uprotid_protid_dict[uniprotid] = proteinid
            
 
     uprot_to_genename_dict = get_genenames_from_uniprotids(uniprotids, email)
+
+    #### There is an issue here - can't put genename in where uniprotid has been
+    #### shortened from xxxxx-1 to xxxxx - how to sort out?
+    #### Maybe some logic to convert back to actual uniprotids?
+    #### or capture proteinid numbers?
+    # Have tried to solve with a dict of uprotid:protid 10/11/17
     
     for uprot, genename in uprot_to_genename_dict.iteritems():
         db_cursor.execute('UPDATE proteintb SET genename=? where uniprotid=?',
-                          [genename,uprot])
+                          [genename,uprotid_protid_dict[uprot]])
 
 def put_function_in_db(db_cursor):
     db_cursor.execute("SELECT proteinid, uniprotid, function FROM proteintb;")
@@ -213,8 +222,8 @@ if __name__ == "__main__":
 
     #add_proteins_to_db(proteins, db_cursor)
     #add_modifications_to_db(modifications, db_cursor)
-    #put_genenames_in_db(db_cursor, args.email)
-    put_function_in_db(db_cursor)
+    put_genenames_in_db(db_cursor, args.email)
+    #put_function_in_db(db_cursor)
     #db_cursor.execute('SELECT proteinid, uniprotid FROM proteintb;')
     #print db_cursor.fetchall()
 
