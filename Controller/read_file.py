@@ -30,20 +30,23 @@ def add_proteins_to_db(proteins, db_cursor):
                               ,(up_id,))
 
 def put_genenames_in_db(db_cursor, email):
-    db_cursor.execute("SELECT proteinid, uniprotid, genename FROM proteintb;")
+    db_cursor.execute("SELECT uniprotid, genename FROM proteintb;")
     results = db_cursor.fetchall()
-    print results
+    #print results
 
     uniprotids = []
-    uprotid_protid_dict = {} # A little wasteful but solves a problem cleanly
+    uprotid_dict = {} # A little wasteful but solves a problem cleanly
     
-    for proteinid, uniprotid, genename in results:
+    for uniprotid, genename in results:
         if genename == None:
             if uniprotid[-2] == '-':
                 #print "shortened %s to %s"%(uniprotid,uniprotid[:-2])
+                full_uniprotid = uniprotid
                 uniprotid = uniprotid[:-2]
+            else:
+                full_uniprotid = uniprotid
             uniprotids.append(uniprotid)
-            uprotid_protid_dict[uniprotid] = proteinid
+            uprotid_dict[uniprotid] = full_uniprotid
            
 
     uprot_to_genename_dict = get_genenames_from_uniprotids(uniprotids, email)
@@ -55,8 +58,10 @@ def put_genenames_in_db(db_cursor, email):
     # Have tried to solve with a dict of uprotid:protid 10/11/17
     
     for uprot, genename in uprot_to_genename_dict.iteritems():
+        #print "DB query: UPDATE proteintb SET genename=%s where uniprotid=%s"%(genename, uprotid_dict[uprot])
+        #print "for uniprot=",uprot
         db_cursor.execute('UPDATE proteintb SET genename=? where uniprotid=?',
-                          [genename,uprotid_protid_dict[uprot]])
+                          [genename,uprotid_dict[uprot]])
 
 def put_function_in_db(db_cursor):
     db_cursor.execute("SELECT proteinid, uniprotid, function FROM proteintb;")
@@ -223,7 +228,7 @@ if __name__ == "__main__":
     #add_proteins_to_db(proteins, db_cursor)
     #add_modifications_to_db(modifications, db_cursor)
     put_genenames_in_db(db_cursor, args.email)
-    #put_function_in_db(db_cursor)
+    put_function_in_db(db_cursor)
     #db_cursor.execute('SELECT proteinid, uniprotid FROM proteintb;')
     #print db_cursor.fetchall()
 
