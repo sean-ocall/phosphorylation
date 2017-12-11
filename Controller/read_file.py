@@ -39,24 +39,22 @@ def put_genenames_in_db(db_cursor, email):
     
     for uniprotid, genename in results:
         if genename == None:
-            if uniprotid[-2] == '-':
+            # Where uniprot id is e.g. A0FGR8-6
+            # The '-6' part will cause conversion to genename to fail
+            # So catch this and sort it out here
+            if uniprotid[-2] == '-' or uniprotid[-3] == '-':
                 #print "shortened %s to %s"%(uniprotid,uniprotid[:-2])
                 full_uniprotid = uniprotid
                 uniprotid = uniprotid[:-2]
             else:
                 full_uniprotid = uniprotid
             uniprotids.append(uniprotid)
+            # This dict will allow conversion back to full uniprotid
             uprotid_dict[uniprotid] = full_uniprotid
            
 
     uprot_to_genename_dict = get_genenames_from_uniprotids(uniprotids, email)
 
-    #### There is an issue here - can't put genename in where uniprotid has been
-    #### shortened from xxxxx-1 to xxxxx - how to sort out?
-    #### Maybe some logic to convert back to actual uniprotids?
-    #### or capture proteinid numbers?
-    # Have tried to solve with a dict of uprotid:protid 10/11/17
-    
     for uprot, genename in uprot_to_genename_dict.iteritems():
         #print "DB query: UPDATE proteintb SET genename=%s where uniprotid=%s"%(genename, uprotid_dict[uprot])
         #print "for uniprot=",uprot
