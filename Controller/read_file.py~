@@ -1,82 +1,21 @@
-import sqlite3, argparse
+import sqlite3, argparse, numpy
 import pandas as pd
-import numpy
+from Class import Phosphosite
+from uniprot_tools import  put_genenames_in_db, put_function_in_db, get_AA_sequence_around_mod,get_genenames_from_uniprotids 
 
 help_msg = "Adds data from Proteome Discoverer output to given DB"
 parser = argparse.ArgumentParser(description=help_msg)
-parser.add_argument('databasefile', help='sqlite3 file (or blank)')
-parser.add_argument('pdfile', help='Proteome Discoverer Output')
+parser.add_argument('--databasefile', help='sqlite3 file (or blank)')
+parser.add_argument('--pdfile', help='Proteome Discoverer Output')
+parser.add_argument('--email', default='spoc@unimelb.edu.au', help='Email address required for using Uniprot API for certain lookup features')
 
-class Protein(object):
-    def __init__(self, uprotid):
-        self.uprotid=uprotid
-        self.mods = []
 
-    def add_mod(self, mod):
-        self.mods.append(mod)
 
-    def add_genename(self, genename):
-        self.genename = genename
-
-    def add_function(self, function):
-        self.function = function
-
-    def get_uprotid(self ):
-        return self.uprotid
-    
-    def get_genename(self ):
-        return self.genename
-
-    def get_function(self ):
-        return self.function
-
-    def get_mods(self ):
-        return self.mods
-
-    def get_mod(self, index):
-        """
-        mainly for unittesting
-        """
-        return self.mods[index]
-        
-
-class Modification(object):
-    def __init__(self, residue, position, protein):
-        self.residue = residue
-        self.position = position
-        self.protein = protein
-
-    def get_residue(self ):
-        return self.residue
-    
-    def get_position(self ):
-        return self.position
-    
-    def get_protein(self ):
-        return self.protein
-        
-def add_proteins_to_db(proteins, db_cursor):
-
-    pass
-    #Connection to db, get cursor, get proteindb
-    
-    #db_proteins = # get these from sqlitedb
-    #last_id_number = #get the largest id number in proteintb
-
-    #for i, protein in enumerate(protein_list):
-    #    if protein not in db_proteins:
-            #put into db as new protein
-            #careful to give it a new id
-
-def add_modifications_to_db(modifications,db_cursor):
-    
-    pass
-    #for i, mod in modifications:
-        # add modification to table
-        # Could there be a functional entry?
-        # Does this link to other mods?
-
-def get_proteins_modifications_from_pd(pdfile):
+def get_phosphosites_from_pd(pdfile):
+    """
+    Read a Proteome Discoverer output file and extract Phosphosite
+    objects from it. Return them as a list
+    """
     xl = pd.ExcelFile(pdfile)
     sheetnames = xl.sheet_names
 
@@ -100,8 +39,7 @@ def get_proteins_modifications_from_pd(pdfile):
         del df_fold_changes[remove]
 
     fold_changes =  df_fold_changes.tolist()
-    proteins = []
-    modifications = []
+    phosphosites = []
 
     for i,prot in enumerate(mod_mast_prot):
         prot_mods = prot.split(' ', 1)
@@ -138,28 +76,66 @@ def get_proteins_modifications_from_pd(pdfile):
                         except:
                             inner_pos.append(0) #sometimes not present in record
 
-        new_protein = Protein(uprot_name)
-        proteins.append(new_protein)
-        for i, aacid in enumerate(inner_aacids):
-            new_mod = Modification(aacid, inner_pos[i], uprot_name)
-            modifications.append(new_mod)
-    ##################################################################
-    #                                                                # 
-    # NB: we are grabbing the fold change, but doing nothing with it #
-    #                                                                #
-    ##################################################################
-    return proteins, modifications
-                        
-    
+        for i, resid in enumerate(inner_aacids):
+            new_psite = Phosphosite(resid, inner_pos[i], uprot_name, avg)
+            phosphosites.append(new_psite)
+
+    return phosphosites
+
+def add_AA_sequences_to_db(db_cursor):
+    """
+    Add the amino acid sequence around the phosphosite to the phosphositetb in
+    the main database
+    """
+    db_cursor.execute("SELECT rowid,residue,position,uniprotid FROM phosphositetb")
+    results = db_cursor.fetchall()
+    #print results
+
+    for rowid, residue, position, uniprotid in results:
+        AA_sequence = get_AA_sequence_around_mod(residue,position,uniprotid)
+        #print AA_sequence
+        #db_cursor.execute("SELECT rowid, AA_sequence FROM  phosphositetb")
+        #print db_cursor.fetchall()
+        db_cursor.execute("UPDATE phosphositetb SET AA_sequence=? where rowid=?;"\
+                              ,(AA_sequence,rowid))
+
+def add_phosphosites_to_db(phosphosites, db_cursor):
+    """
+    Extract info from Phosphosite objects and add to phosphositetb in main
+    database
+    """
+
+    for phosphosite in phosphosites:
+        residue = phosphosite.get_residue()
+        position = phosphosite.get_position()
+        uniprotid = phosphosite.get_uniprotid()
+        fold_change = phosphosite.get_fold_change()
+        db_cursor.execute(\
+                          "INSERT INTO phosphositetb (residue,position,uniprotid,foldchange) VALUES(?,?,?,?);"\
+                          ,(residue,position,uniprotid,fold_change))
+        
 if __name__ == "__main__":
     args = parser.parse_args()
 
     conn = sqlite3.connect(args.databasefile)
     db_cursor = conn.cursor()
 
-    proteins, modifications = get_proteins_modifications_from_pd(args.pdfile)
+    #phosphosites = get_phosphosites_from_pd(args.pdfile)
 
-    add_proteins_to_db(proteins, db_cursor)
-    add_modifications_to_db(modifications, db_cursor)
+    #add_phosphosites_to_db(phosphosites, db_cursor)
+    #put_genenames_in_db(db_cursor, args.email)
+    #put_function_in_db(db_cursor)
+    #add_AA_sequences_to_db(db_cursor)
 
-    
+    #######################################################################################
+    #
+    # For testing purposes:
+    #
+    #######################################################################################
+    db_cursor.execute('SELECT rowid, AA_sequence, uniprotid, genename FROM phosphositetb;')
+    print "Rowid\tUNIPROT Genename"
+    for rowid,AA_sequence,uniprotid,genename in db_cursor.fetchall():
+        print rowid,"\t",AA_sequence,"\t",uniprotid,"  ",genename
+
+    conn.commit() # might be better to do this in the functions?? would have to pass conn instead of cursor
+    conn.close()

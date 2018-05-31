@@ -6,12 +6,6 @@ class Phosphosite(object):
         self.uniprotid = uniprotid
         self.fold_change = fold_change
 
-    def set_rowid(self, rowid):
-        self.rowid = rowid
-
-    def get_rowid(self):
-        return self.rowid
-
     def get_residue(self ):
         return self.residue
     
@@ -41,6 +35,3 @@ class Phosphosite(object):
 
     def get_function(self):
         return self.function
-    
-    def get_label(self):
-        return u"{}".format(self.genename) + ' ' + self.residue + str(self.position)

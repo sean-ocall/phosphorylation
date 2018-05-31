@@ -8,14 +8,13 @@ t_fields = ['residue', 'position', 'uniprotid','genename','function', 'foldchang
 t_field_types = ['TEXT', 'INTEGER', 'TEXT', 'TEXT', 'TEXT', 'FLOAT','TEXT']
 
 c.execute(""" CREATE TABLE IF NOT EXISTS {tn} (
-                                        {fn1} {ft1},
+                                        {fn1} {ft1} PRIMARY KEY,
                                         {fn2} {ft2},
                                         {fn3} {ft3},
                                         {fn4} {ft4},
                                         {fn5} {ft5},
-                                        {fn6} {ft6},
-                                        {fn7} {ft7}
-                                    ); """.format(tn=table_name,
+                                        {fn6} {ft6}
+                                    ); """.format(tn=table_name1,
                                                   fn1=t_fields[0],
                                                   fn2=t_fields[1],
                                                   fn3=t_fields[2],

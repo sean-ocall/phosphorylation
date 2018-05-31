@@ -1,0 +1,39 @@
+import urllib, urllib2
+import xml.etree.ElementTree as ET
+
+def get_function_from_uniprot(uniprotid):
+    """
+    Go to uniprot and find out if 'keyword' is one of the keywords
+    for this accession number on uniprot
+    """
+    url = "http://www.uniprot.org/uniprot/" + uniprotid + ".xml"
+    url_content = urllib.urlopen(url)
+    xml_content = url_content.read()
+
+    root = ET.fromstring(xml_content)
+
+    function = root.findall('.//{http://uniprot.org/uniprot}comment')
+
+    function_text = ''
+
+    for f in function:
+        if f.attrib['type'] == 'function':
+            function_text = function_text + "{}".format(f.find('.//{http://uniprot.org/uniprot}text').text)
+
+    return function_text
+
+def get_keywords_from_uniprot(uniprotid):
+    """
+    Go to uniprot and find out if 'keyword' is one of the keywords
+    for this accession number on uniprot
+    """
+    url = "http://www.uniprot.org/uniprot/" + uniprotid + ".xml"
+    url_content = urllib.urlopen(url)
+    xml_content = url_content.read()
+
+    root = ET.fromstring(xml_content)
+
+    keywords = root.findall('.//{http://uniprot.org/uniprot}keyword')
+    return_list = [k.text for k in keywords]
+
+    return return_list
